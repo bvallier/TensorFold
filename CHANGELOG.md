@@ -6,6 +6,28 @@ Each release's page on GitHub has its notes and measurements. See [the 1.0.0 rel
 
 - CUDA (GB10): `TF_CUDA_CARVEOUT_SOURCE=daemon` takes the display carveout from a display-memory daemon that lends it in 2 MiB slices (kindling spark-os's dispramd), for a box whose driver refuses a DRM dumb buffer; `drm` stays the default and with the carveout off nothing changes. A daemon that does not answer, a refused claim, and a key file that is missing, not a regular file or empty on its first line each stop the load with the cause named, and a refused claim's line carries the daemon's own reason. On a GB10 with dispramd, a 108,012-token prompt took 35.6 s to prefill against 22.4 s with the carveout off, and decode took 11.5 against 8.85 ms a token, with the output unchanged (#2762). Thanks to @BadAd84 and @bertholomus.
 
+- Docs: the GLM-5.3-Flash CUDA recipe's Verified copy drafts section lists, for one checkpoint at TP=2 with `--parallel 4`, the loads that `TF_GLM_COPIES=1` sped up and the ones it slowed, and says the default stays off (#3335). Thanks to @Bizuayeu.
+- Tests: the Qwen 3.8 27B Metal residency fixtures compile again on macOS after the DFlash2 target became a value (#3572).
+- Tests: the kernel contract's Llama `gemm_untransposed` control edits the `TF_GEMM_NAX_KERNEL` instance line again, so its planted fault fails as it should (#3157, thanks @gilby, who found and fixed it first).
+
+- Docs: the GLM-5.3-Flash recipe records the FP8 latent cache's diagnostics on FP4-Local at TP=2 on two GB10s, with its bytes a token and fixed per-stream state, and says it is not qualified (#3432). Thanks to @laudney.
+
+- KV pool: a window's pages go back to the pool once their readers are done, and a step retires under the forward's token, leaving the settle to its caller; no served path calls it yet (#3353, part of #2444). Thanks to @jschmied.
+
+- Qwen3.8-27B: `serve` drafts with DFlash2 by itself when `z-lab/Qwen3.8-27B-DFlash2` is already in the Hugging Face cache, and one line names it; nothing is downloaded, a drafter that does not open leaves the target serving alone, and `--drafter none` serves without it. The target checks every drafted token, so replies are the same tokens; the benchmark passes the drafter it chose before (#3204, fixes #3173).
+
+- Images: POST /v1/images/generations takes `n` from 1 to 4, run one after another through the engine's one-picture call, each picture with its own seed (the request's `seed` plus its index, or 42 plus its index without one) reported on its `data` item; each PNG is the one the `n: 1` request with that seed returns, and a refusal or cancel mid-way returns its error with no pictures (#3244, fixes #3223).
+
+- Nemotron on Metal without tensor units skips the lane tiles no kernel reads, with the Linear layout and MTP allocation order kept; replies are unchanged on M5 and M3 Ultra (#3375). Thanks to @jschmied.
+
+- Flint on Metal: `--drafter` takes the published `incoai/Flint-DFlash2` draft model, through the DFlash2 runtime the 27B uses; every reply equals drafts off, and greedy decode on an M5 Ultra goes from 174.6 to 233.0 tok/s at one stream and 221.4 to 289.7 at two (#3511).
+
+- Docs: `docs/api.md` documents the Ollama-compatible routes (`/api/tags`, `/api/ps`, `/api/version`, `/api/show`, `/api/chat`, `/api/generate`, `/api/embed`): what each takes and refuses, the NDJSON replies, and how each differs from its OpenAI-style route (#3496).
+
+- Qwen3-Embedding on Metal: 0.6B, 4B and 8B serve through `/v1/embeddings` on chips with tensor units, with the same refusals and MRL widths as CUDA; vectors match an FP32 reference within 0.001 cosine distance, and a batch equals its single inputs bit for bit (#3494).
+
+- Qwen3.5 on CUDA: the dense family plans each rank's share of the 27B for tensor parallelism (host only), and `--tp` above 1 is refused by name until ranks serve (#3383). Thanks to @Nipale-ai.
+
 - Prompt cache: radix pages carry their reuse identity, and a request's chunk start is decided from it, so pages are only reused where they were written for the same request shape (#2888). Thanks to @laudney.
 
 - Tests: the Metal device test `tf-flashnext-run` is built from five source files under 600 lines instead of one of 1,690; its modes and settings are unchanged (#3504).
